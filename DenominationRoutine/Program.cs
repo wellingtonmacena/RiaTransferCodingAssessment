@@ -28,7 +28,7 @@
 
                 int division = payout / cartridge;
                 int rest = payout - (division * cartridge);
-                bool firstMethodFiring = true;
+                bool isFirstMethodFiring = true;
 
                 if (rest > 0)
                 {
@@ -38,17 +38,17 @@
                         currentMessage += $" + {division} x {cartridge} EUR";
 
                     FindPossibleCombinations(rest, cartridges, stringBuilder, currentMessage, true);
-                    firstMethodFiring = false;
+                    isFirstMethodFiring = false;
                 }
 
-                if (!string.IsNullOrWhiteSpace(currentMessage) && useCurrentMessage && firstMethodFiring)
+                if (!string.IsNullOrWhiteSpace(currentMessage) && useCurrentMessage && isFirstMethodFiring)
                 {
                     stringBuilder.Add($"{currentMessage} + {division} x {cartridge} EUR");
                     useCurrentMessage = false;
                     break;
                 }
 
-                else if (firstMethodFiring && !useCurrentMessage)
+                else if (isFirstMethodFiring && !useCurrentMessage)
                 {
                     stringBuilder.Add($"{division} x {cartridge} EUR");
                 }
