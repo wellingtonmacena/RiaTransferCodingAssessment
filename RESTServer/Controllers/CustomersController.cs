@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RESTServer.Models;
-using RESTServer.Repositories.Interfaces;
 
 namespace RESTServer.Controllers
 {
@@ -8,43 +7,62 @@ namespace RESTServer.Controllers
     [Route("api/v1/customers")]
     public class CustomersController : Controller
     {
-        List<>
-        private ICustomerRepository _iCustomerRepository { get; set; }
-        public CustomersController(ICustomerRepository iCustomerRepository)
-        {
-            _iCustomerRepository = iCustomerRepository;
-        }
+        private CustomerArraySingleton singleton = CustomerArraySingleton.Instance;
 
         [HttpGet]
         public async Task<ActionResult> GetAll()
         {
-            List<Customer> customers = await _iCustomerRepository.GetAll();
-
-            if (customers == null)
-                return NotFound();
+            if (singleton.Customers.Length == 0)
+                return NoContent();
             else
-                return Ok(new { data = customers });
+                return Ok(singleton.Customers);
         }
 
         [HttpPost]
-        public async Task<ActionResult> CreateMany([FromBody] List<Customer> customers)
+        public async Task<ActionResult> CreateMany([FromBody] List<Customer> postCustomers)
         {
-            List<Customer> customersAux = new List<Customer>();
-            foreach (var customer in customers)
+            foreach (var customer in postCustomers)
             {
-                if (customer.AllFieldAreComplete() && !customer.IsUnderAge() && ! await _iCustomerRepository.Exists(customer.Id))
-                    customersAux.Add(customer);
-            }
-            if (customersAux.Count > 0)
-            {
-                await _iCustomerRepository.CreateMany(customersAux);
+                if (customer.AreAllFieldSupplied() && !customer.IsUnderAge())
+                {
+                    int id = customer.Id;
+                    if (singleton.Customers.ToList().Exists(item => item.Id.Equals(customer.Id)))
+                        id = singleton.Customers.ToList().Max(item => item.Id) + 1;
 
-                return Ok();
+                    customer.Id = id;
+                    singleton.Customers = InsertNewItem(customer);
+                }
             }
-            else
+
+            singleton.SaveData();
+            return Ok();
+        }
+
+        private Customer[] InsertNewItem(Customer newItem)
+        {
+            Customer[] customers = singleton.Customers;
+            // Find the index to insert item
+            int insertIndex = Array.BinarySearch(customers, newItem);
+
+            // If BinarySearch returns a negative value, convertit to the index where the item should be inserted
+            if (insertIndex < 0)
             {
-                return StatusCode(406, "Any of the customers is valid");
+                insertIndex = ~insertIndex;
             }
+
+            // Resize the array
+            Array.Resize(ref customers, customers.Length + 1);
+
+            // Shift elements to make space for the new item
+            for (int i = customers.Length - 1; i > insertIndex; i--)
+            {
+                customers[i] = customers[i - 1];
+            }
+
+            // Insert the new item at the correct position
+            customers[insertIndex] = newItem;
+
+            return customers;
         }
     }
 }

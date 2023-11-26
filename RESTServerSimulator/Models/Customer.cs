@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System.Text;
 
-namespace RESTServer.Models
+namespace RESTServerSimulator.Models
 {
     public class Customer : IComparable<Customer>
     {
